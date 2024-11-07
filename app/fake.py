@@ -2,6 +2,7 @@ import random
 from random import randint
 from sqlalchemy.exc import IntegrityError
 from faker import Faker
+from flask import current_app as app
 from . import db
 from .models import User
 
@@ -13,6 +14,7 @@ def users(count=100):
     i = 0
     while i < count:
         u = User(email=fake.unique.email(),
+                 name=fake.name(),
                  username=fake.unique.user_name(),
                  # Testaa IntegrityError-tilanne:
                  # username = 'tupla',
@@ -30,7 +32,8 @@ def users(count=100):
         
         db.session.add(u)
         fake_users.append(u)
-        print("fake_user: "+str(u))
+        # print("fake_user: "+str(u))
+        app.logger.info(f"fake_user: {u}")  
         i += 1
 
     try:
@@ -38,11 +41,13 @@ def users(count=100):
     except IntegrityError:
         db.session.rollback()
         fake_users = []
-        print("virhe: useita samoja käyttäjätunnuksia")
+        # print("virhe: useita samoja käyttäjätunnuksia")
+        app.logger.error("virhe: useita samoja käyttäjätunnuksia")
     except Exception as e:
         db.session.rollback()
         fake_users = []
-        print(f"An error occurred: {e}")
-    print("fake_users: "+str(fake_users))
+        # print(f"An error occurred: {e}")
+        app.logger.error(f"An error occurred: {e}")
+    # print("fake_users: "+str(fake_users))
     return fake_users
 

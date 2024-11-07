@@ -3,6 +3,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
+    GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'Vaikeasti arvattavissa oleva salasana'
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.googlemail.com')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
@@ -18,8 +19,10 @@ class Config:
     FS_POSTS_PER_PAGE = 25
     WTF_CSRF_ENABLED = True
     UPLOAD_FOLDER = 'profiilikuvat/'
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-    MAX_CONTENT_LENGTH = 2 * 1024 * 1024
+    ALLOWED_EXTENSIONS = ['png','jpg','jpeg','gif']
+    # Huom. MAX_CONTENT_LENGTH aiheuttaa HTTP-virheen Error 413 Request Entity Too Large
+    # MAX_CONTENT_LENGTH = 2 * 1024 * 1024
+    MAX_FILE_SIZE = 2 * 1024 * 1024
     KUVAPOLKU = os.path.join(os.path.abspath('.'),UPLOAD_FOLDER)
     print("KUVAPOLKU: "+KUVAPOLKU)
 
@@ -33,6 +36,11 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
 
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'sqlite://'
+
 class XamppConfig(Config):
     DEBUG = True
     DB_USERNAME= os.environ.get('DB_USERNAME') or 'root'
@@ -43,22 +51,13 @@ class XamppConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://'+DB_USERNAME+':'+DB_PASSWORD+'@'+DB_HOST+':'+DB_PORT+'/'+DB_NAME
     print("SQLALCHEMY_DATABASE_URI: "+SQLALCHEMY_DATABASE_URI)
 
-class TestingConfig(Config):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite://'
-
-
-class ProductionConfig(Config):
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'data.sqlite')
-
+class ProductionConfig(XamppConfig):
+    DEBUG = False
 
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
     'xampp': XamppConfig,
-
-    'default': DevelopmentConfig
+    'default': XamppConfig
 }

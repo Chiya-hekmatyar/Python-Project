@@ -3,9 +3,12 @@ from flask_bootstrap import Bootstrap
 from flask_mail import Mail
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import OperationalError
 from flask_login import LoginManager
 from config import config
 from flask_wtf import CSRFProtect
+import logging
+
 
 
 csrf = CSRFProtect()
@@ -17,6 +20,11 @@ db = SQLAlchemy(session_options={"autoflush": False})
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
+logging.getLogger('flask_cors').level = logging.DEBUG
+# Tulostukset Azuren virhekonsoliin via stderr
+logger = logging.getLogger('flask_app')
+logger.setLevel(logging.DEBUG)
+
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
@@ -25,7 +33,14 @@ def create_app(config_name):
     bootstrap.init_app(app)
     mail.init_app(app)
     moment.init_app(app)
-    db.init_app(app)
+    # db.init_app(app)
+    try:
+        db.init_app(app)
+    except OperationalError as e:
+        app.logger.error(f"VIRHE: Database connection failed: {e}")
+        # Handle the error, e.g., show a user-friendly message or retry connection
+        return None
+
     csrf.init_app(app)
     
     login_manager.init_app(app)
